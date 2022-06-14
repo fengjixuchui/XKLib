@@ -5,9 +5,6 @@
 #include "exception.h"
 #include "memoryutils.h"
 #include "task.h"
-#include <bits/types/siginfo_t.h>
-#include <sched.h>
-#include <sys/wait.h>
 
 namespace XKLib
 {
@@ -46,7 +43,8 @@ namespace XKLib
     template <std::size_t N>
     RunnableTask<N>::RunnableTask(ProcessBase processBase,
                                   ptr_t routineAddress)
-     : Task(processBase), _routine_address(routineAddress)
+     : Task(processBase),
+       _routine_address(routineAddress)
 #ifdef WINDOWS
        ,
        _thread_handle(nullptr)
@@ -71,12 +69,12 @@ namespace XKLib
     auto RunnableTask<N>::kill() const -> void
     {
 #ifdef WINDOWS
-        if (!_thread_handle)
+        if (not _thread_handle)
         {
             XKLIB_EXCEPTION("Thread did not start yet");
         }
 
-        if (!TerminateThread(_thread_handle, EXIT_CODE))
+        if (not TerminateThread(_thread_handle, EXIT_CODE))
         {
             XKLIB_EXCEPTION("Could not terminate task");
         }
@@ -97,7 +95,7 @@ namespace XKLib
     auto RunnableTask<N>::wait() const -> void
     {
 #ifdef WINDOWS
-        if (!_thread_handle)
+        if (not _thread_handle)
         {
             XKLIB_EXCEPTION("Task did not start yet");
         }
@@ -109,7 +107,7 @@ namespace XKLib
         siginfo_t siginfo;
         const auto ret = waitid(P_PID, _id, &siginfo, WEXITED);
 
-        if (ret == -1)
+        if (ret < 0)
         {
             XKLIB_EXCEPTION("Could not wait for task "
                             + std::to_string(_id));
@@ -140,7 +138,7 @@ namespace XKLib
           false,
           _process_base.id());
 
-        if (!process_handle)
+        if (not process_handle)
         {
             XKLIB_EXCEPTION("Could not get permissions to create a "
                             "new "
@@ -182,7 +180,7 @@ namespace XKLib
                         + MemoryUtils::GetPageSize(),
                       N);
 
-        if (_id == INVALID_ID)
+        if (_id <= INVALID_ID)
         {
             XKLIB_EXCEPTION("Could not create task");
         }

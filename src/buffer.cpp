@@ -4,8 +4,7 @@
 
 using namespace XKLib;
 
-auto XKLib::get_variable_type_str(const typesize_t typeSize)
-  -> std::string
+auto XKLib::get_variable_type_str(const TypeSize typeSize) -> std::string
 {
     static const std::string strings[] = { "safesize (32 bits)",
                                            "8 bits signed",
@@ -29,7 +28,8 @@ auto XKLib::get_variable_type_str(const typesize_t typeSize)
 }
 
 Buffer::Buffer(const std::size_t maxSize)
- : _max_size(maxSize), _allocated(true)
+ : _max_size(maxSize),
+   _allocated(true)
 {
     _data = alloc<data_t>(_max_size);
 }
@@ -65,7 +65,7 @@ Buffer::~Buffer()
 
 auto Buffer::operator[](const std::size_t size) const -> const auto&
 {
-    if (!_data and size >= _max_size)
+    if (not _data and size >= _max_size)
     {
         XKLIB_EXCEPTION("Out of bounds.");
     }
@@ -93,7 +93,7 @@ auto Buffer::toBytes() const -> bytes_t
 
 auto Buffer::operator[](const std::size_t size) -> auto&
 {
-    if (!_data and size >= _max_size)
+    if (not _data and size >= _max_size)
     {
         XKLIB_EXCEPTION("Out of bounds.");
     }

@@ -174,13 +174,13 @@ template <XKLib::XKCAlphabetType T>
 auto XKLib::XKC<T>::BinaryTree::insert(const std::shared_ptr<Node> parent,
                                        const T value) -> void
 {
-    if (!parent->left)
+    if (not parent->left)
     {
         parent->left = std::make_shared<Node>(
           Node { parent->root, parent, value });
         return;
     }
-    else if (!parent->right)
+    else if (not parent->right)
     {
         parent->right = std::make_shared<Node>(
           Node { parent->root, parent, value });
@@ -494,8 +494,8 @@ auto XKLib::XKC<T>::encode(const data_t data, const std::size_t size)
         }
         else
         {
-            alphabet.push_back(
-              { occurrence.letter_value, occurrence.count });
+            alphabet.push_back({ occurrence.letter_value,
+                                 occurrence.count });
         }
     }
 

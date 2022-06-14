@@ -26,11 +26,12 @@ auto ProcessMemoryMap::refresh() -> void
     _areas.clear();
 
 #ifndef WINDOWS
-    std::ifstream file_memory_map(
-      "/proc/" + std::to_string(_process_base.id()) + "/maps");
+    std::ifstream file_memory_map("/proc/"
+                                  + std::to_string(_process_base.id())
+                                  + "/maps");
     std::string line;
 
-    if (!file_memory_map.is_open())
+    if (not file_memory_map.is_open())
     {
         XKLIB_EXCEPTION("Couldn't open /proc/"
                         + std::to_string(_process_base.id()) + "/maps");
@@ -63,10 +64,11 @@ auto ProcessMemoryMap::refresh() -> void
 
         constexpr auto REGEX_HEX_NUMBER = "[0-9a-f]+";
         constexpr auto REGEX_PROT       = "[r-][w-][x-][ps]";
-        constexpr auto REGEX_NAME = "[0-9a-f]+-[0-9a-f]+ [r-][w-][x-][ps] "
-                                    "[0-9a-f]+ "
-                                    "[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f] "
-                                    "[0-9]+[ ]+";
+        constexpr auto REGEX_NAME       = "[0-9a-f]+-[0-9a-f]+ "
+                                          "[r-][w-][x-][ps] "
+                                          "[0-9a-f]+ "
+                                          "[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f] "
+                                          "[0-9]+[ ]+";
 
         std::smatch match;
         const std::regex regex_hex_number(REGEX_HEX_NUMBER);
@@ -144,10 +146,10 @@ auto ProcessMemoryMap::refresh() -> void
     file_memory_map.close();
 
 #else
-    const auto process_handle = OpenProcess(PROCESS_QUERY_INFORMATION,
-                                            false,
-                                            view_as<DWORD>(
-                                              _process_base.id()));
+    const auto process_handle = OpenProcess(
+      PROCESS_QUERY_INFORMATION,
+      false,
+      view_as<DWORD>(_process_base.id()));
 
     if (process_handle == nullptr)
     {
@@ -175,8 +177,8 @@ auto ProcessMemoryMap::refresh() -> void
                                module_path.data(),
                                module_path.size()))
         {
-            area->setName(
-              std::string(module_path.begin(), module_path.end()));
+            area->setName(std::string(module_path.begin(),
+                                      module_path.end()));
         }
 
         _areas.push_back(std::move(area));

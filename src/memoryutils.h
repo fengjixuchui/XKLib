@@ -6,7 +6,6 @@
 #include "types.h"
 
 #include "custom_linux_syscalls.h"
-#include <sstream>
 
 namespace XKLib
 {
@@ -40,10 +39,10 @@ namespace XKLib
                                       const std::size_t size,
                                       const mapf_t flags) -> void
         {
-            const auto aligned_address = Align<ptr_t>(view_as<ptr_t>(
-                                                        address),
-                                                      GetPageSize());
-            const auto aligned_size    = AlignToPageSize(size,
+            const auto aligned_address = Align<ptr_t>(
+              view_as<ptr_t>(address),
+              GetPageSize());
+            const auto aligned_size = AlignToPageSize(size,
                                                       GetPageSize());
 #ifdef WINDOWS
             const auto process_handle = GetCurrentProcessId() == pid ?
@@ -66,19 +65,19 @@ namespace XKLib
               MemoryArea::ProtectionFlags::ToOS(flags),
               &dwOldFlags);
 
-            if (!ret)
+            if (not ret)
             {
                 XKLIB_EXCEPTION("VirtualProtectEx failed");
             }
 
             CloseHandle(process_handle);
 #else
-            const auto ret = syscall(__NR_rmprotect,
-                                     pid,
-                                     aligned_address,
-                                     aligned_size,
-                                     MemoryArea::ProtectionFlags::ToOS(
-                                       flags));
+            const auto ret = syscall(
+              __NR_rmprotect,
+              pid,
+              aligned_address,
+              aligned_size,
+              MemoryArea::ProtectionFlags::ToOS(flags));
 
             if (ret < 0)
             {
@@ -141,6 +140,11 @@ namespace XKLib
                              const auto address,
                              const std::size_t size) -> void
         {
+            const auto aligned_address = Align<ptr_t>(
+              view_as<ptr_t>(address),
+              GetPageSize());
+            const auto aligned_size = AlignToPageSize(size,
+                                                      GetPageSize());
 #ifdef WINDOWS
             const auto process_handle = GetCurrentProcessId() == pid ?
                                           GetCurrentProcess() :
@@ -155,18 +159,21 @@ namespace XKLib
             }
 
             const auto ret = VirtualFreeEx(process_handle,
-                                           view_as<ptr_t>(address),
-                                           size,
+                                           view_as<ptr_t>(aligned_address),
+                                           aligned_size,
                                            MEM_RELEASE);
 
-            if (!ret)
+            if (not ret)
             {
                 XKLIB_EXCEPTION("VirtualFreeEx failed");
             }
 
             CloseHandle(process_handle);
 #else
-            const auto ret = syscall(__NR_rmunmap, pid, address, size);
+            const auto ret = syscall(__NR_rmunmap,
+                                     pid,
+                                     aligned_address,
+                                     aligned_size);
 
             if (ret < 0)
             {
@@ -214,7 +221,7 @@ namespace XKLib
               result.size(),
               nullptr);
 
-            if (!ret)
+            if (not ret)
             {
                 std::stringstream ss;
                 ss << std::hex << address;
@@ -235,8 +242,8 @@ namespace XKLib
                                                  const std::size_t size)
           -> std::vector<A>
         {
-            std::vector<A> result(
-              AlignToPageSize(size + (sizeof(A) * 2), sizeof(A)));
+            std::vector<A> result(AlignToPageSize(size + (sizeof(A) * 2),
+                                                  sizeof(A)));
 
 #ifndef WINDOWS
             const iovec local  = { .iov_base = result.data() + 1,
@@ -270,7 +277,7 @@ namespace XKLib
               result.size() * sizeof(A),
               nullptr);
 
-            if (!ret)
+            if (not ret)
             {
                 XKLIB_EXCEPTION("ReadProcessMemory failed with "
                                 + std::to_string(address) + " and size: "
@@ -287,9 +294,10 @@ namespace XKLib
                                            const T address) -> void
         {
 #ifndef WINDOWS
-            const iovec local  = { .iov_base = view_as<const data_t>(
-                                    bytes.data()),
-                                   .iov_len = bytes.size() };
+            const iovec local = {
+                .iov_base = view_as<const data_t>(bytes.data()),
+                .iov_len  = bytes.size()
+            };
             const iovec remote = { .iov_base = view_as<ptr_t>(address),
                                    .iov_len  = bytes.size() };
 
@@ -305,10 +313,10 @@ namespace XKLib
                 std::stringstream ss;
                 ss << std::hex << address;
 
-                XKLIB_EXCEPTION(
-                  "process_vm_writev failed with: address: " + ss.str()
-                  + ", size: " + std::to_string(bytes.size())
-                  + ", ret: " + std::to_string(ret));
+                XKLIB_EXCEPTION("process_vm_writev failed with: address: "
+                                + ss.str() + ", size: "
+                                + std::to_string(bytes.size())
+                                + ", ret: " + std::to_string(ret));
             }
 
 #else
@@ -331,7 +339,7 @@ namespace XKLib
                                                 bytes.size(),
                                                 nullptr);
 
-            if (!ret)
+            if (not ret)
             {
                 XKLIB_EXCEPTION(
                   "WriteProcessMemory failed with: address: " + ss.str()
